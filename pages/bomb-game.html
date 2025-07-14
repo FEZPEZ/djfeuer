@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cursor‑Chase Survival</title>
+    <style>
+        html,body {
+            margin: 0;
+            height: 100%;
+            overflow: hidden;
+            cursor: none;
+            background: #000 url('../assets/bomb-game/bg.png') repeat;
+            background-size: auto; /* optional: or set to contain/cover/fixed */
+        }
+        #field{position:relative;width:100%;height:100%;}
+        .sprite{position:absolute;pointer-events:none;width:64px;height:64px;transform:translate(-50%,-50%);}
+        /* ---------- HUD ---------- */
+        #score{
+            position:fixed;top:10px;left:50%;transform:translateX(-50%);
+            padding:4px 14px;border:2px solid #fff;border-radius:8px;
+            background:rgba(0,0,0,.5);color:#fff;font:700 22px monospace;
+        }
+        /* ---------- blast flash ---------- */
+        .flash{
+            position:absolute;pointer-events:none;border-radius:50%;
+            background:rgba(255,200,0,.8);transform:scale(0);opacity:1;
+            transition:transform .25s ease-out,opacity .25s ease-out;
+        }
+        .flash.grow{transform:scale(1);opacity:0;}
+        /* ---------- point popups ---------- */
+        .popup{
+            position:absolute;pointer-events:none;font:700 18px monospace;
+            transform:translate(-50%,-50%);animation:rise 2s ease-out forwards;
+            text-shadow:0 0 4px #000;
+        }
+        .popup.score{color:#ffffff;}
+        .popup.half{color:#ff4d4d;}          /* red “1/2” popup */
+        @keyframes rise{
+            0%{opacity:1;transform:translate(-50%,-50%) scale(1);}
+            100%{opacity:0;transform:translate(-50%,-120%) scale(1.2);}
+        }
+    </style>
+</head>
+<body>
+<div id="field"></div>
+<div id="score">0</div>
+
+<script>
+    /* ---------- CONFIG ---------- */
+    const PLAYER_SRC = '../assets/bomb-game/character.gif';
+    const ENEMY_SRC  = '../assets/bomb-game/enemy.gif';
+    const BOMB_SRC   = '../assets/bomb-game/bomb.gif';
+    const ENEMY_SPAWN_MIN = 1000, ENEMY_SPAWN_MAX = 4000;
+    const BOMB_SPAWN_MIN  = 4000, BOMB_SPAWN_MAX  = 8000;
+    const ENEMY_SPEED = 1.6;
+    const BOMB_ZAP_RADIUS_FACTOR = 0.20;
+    const FLASH_TIME = 300;
+    /* ---------- UTILS ---------- */
+    const rand=(a,b)=>Math.random()*(b-a)+a;
+    const $=id=>document.getElementById(id);
+    const vp=()=>({w:innerWidth,h:innerHeight});
+    /* ---------- STATE ---------- */
+    const field=$('field'),scoreEl=$('score');
+    let score=0;
+    const sprites={enemies:[],bombs:[]};
+    /* ---------- PLAYER ---------- */
+    const player=document.createElement('img');
+    player.src=PLAYER_SRC;player.className='sprite';field.appendChild(player);
+    let mouseX=vp().w/2,mouseY=vp().h/2;
+    onmousemove=e=>{mouseX=e.clientX;mouseY=e.clientY};
+    /* ---------- SPAWNERS ---------- */
+    function spawnEnemy(){
+        const {w,h}=vp(),edge=Math.floor(Math.random()*4);
+        let x,y;
+        switch(edge){
+            case 0:x=rand(0,w);y=-50;break;
+            case 1:x=w+50;y=rand(0,h);break;
+            case 2:x=rand(0,w);y=h+50;break;
+            default:x=-50;y=rand(0,h);
+        }
+        const e=document.createElement('img');
+        e.src=ENEMY_SRC;e.className='sprite';
+        e.style.left=`${x}px`;e.style.top=`${y}px`;
+        field.appendChild(e);
+        sprites.enemies.push({el:e,x,y});
+        setTimeout(spawnEnemy,rand(ENEMY_SPAWN_MIN,ENEMY_SPAWN_MAX));
+    }
+    function spawnBomb(){
+        const {w,h}=vp(),x=rand(50,w-50),y=rand(50,h-50);
+        const b=document.createElement('img');
+        b.src=BOMB_SRC;b.className='sprite';
+        b.style.left=`${x}px`;b.style.top=`${y}px`;
+        field.appendChild(b);
+        sprites.bombs.push({el:b,x,y});
+        setTimeout(spawnBomb,rand(BOMB_SPAWN_MIN,BOMB_SPAWN_MAX));
+    }
+    /* ---------- VISUAL FX ---------- */
+    function makeFlash(cx,cy,r){
+        const f=document.createElement('div');
+        f.className='flash';
+        f.style.width=f.style.height=`${r*2}px`;
+        f.style.left=`${cx}px`;f.style.top=`${cy}px`;
+        f.style.marginLeft=f.style.marginTop=`-${r}px`;
+        field.appendChild(f);
+        requestAnimationFrame(()=>f.classList.add('grow'));
+        setTimeout(()=>field.removeChild(f),FLASH_TIME);
+    }
+    function makePopup(x,y,text,cls="score"){
+        const p=document.createElement('div');
+        p.className=`popup ${cls}`;
+        p.textContent=text;
+        p.style.left=`${x}px`;p.style.top=`${y}px`;
+        field.appendChild(p);
+        setTimeout(()=>field.removeChild(p),2000);
+    }
+    /* ---------- MAIN LOOP ---------- */
+    function loop(){
+        player.style.left=`${mouseX}px`;player.style.top=`${mouseY}px`;
+        const p={x:mouseX,y:mouseY};
+
+        /* move enemies */
+        for(let i=sprites.enemies.length-1;i>=0;i--){
+            const en=sprites.enemies[i];
+            const dx=p.x-en.x,dy=p.y-en.y,dist=Math.hypot(dx,dy);
+            en.x+=dx/dist*ENEMY_SPEED;en.y+=dy/dist*ENEMY_SPEED;
+            en.el.style.left=`${en.x}px`;en.el.style.top=`${en.y}px`;
+
+            /* player–enemy collision */
+            if(dist<32){
+                score=Math.floor(score/2);
+                scoreEl.textContent=score;
+                makePopup(en.x,en.y,"1/2","half");    // red popup
+                field.removeChild(en.el);
+                sprites.enemies.splice(i,1);
+            }
+        }
+
+        /* bombs */
+        for(let i=sprites.bombs.length-1;i>=0;i--){
+            const b=sprites.bombs[i],dist=Math.hypot(p.x-b.x,p.y-b.y);
+            if(dist<32){
+                const zapR=vp().w*BOMB_ZAP_RADIUS_FACTOR;
+                makeFlash(b.x,b.y,zapR);
+
+                /* combo scoring */
+                let mult=1;
+                for(let j=sprites.enemies.length-1;j>=0;j--){
+                    const en=sprites.enemies[j];
+                    if(Math.hypot(en.x-b.x,en.y-b.y)<=zapR){
+                        const pts=500*mult;mult*=2;
+                        score+=pts;
+                        makePopup(en.x,en.y,`${pts}`,"score");
+                        field.removeChild(en.el);
+                        sprites.enemies.splice(j,1);
+                    }
+                }
+                scoreEl.textContent=score;
+                field.removeChild(b.el);
+                sprites.bombs.splice(i,1);
+            }
+        }
+        requestAnimationFrame(loop);
+    }
+    /* ---------- START ---------- */
+    spawnEnemy();spawnBomb();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

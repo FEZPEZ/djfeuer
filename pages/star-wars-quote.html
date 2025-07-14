@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Random Movie Quote Generator with Jitter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        html,body {
+            margin: 0;
+            height: 100%;
+            overflow: hidden;
+            background: #000 url('../assets/star-wars-quote/bg.jpg') repeat;
+            background-size: auto; /* optional: or set to contain/cover/fixed */
+        }
+        /* Inline-block letters for jitter */
+        #quote-text span, #author span {
+            display: inline-block;
+            will-change: transform, filter;
+        }
+
+        /* Quote box keeps fixed max-width but allows overflow */
+        #quote-box {
+            position: relative;
+            overflow: visible;      /* allow jitter overflow */
+            max-width: 28rem;       /* same as max-w-md */
+            width: 100%;
+            box-sizing: border-box;
+            padding-left: 3rem;     /* keep left border visible */
+        }
+
+        /* Center the content inside the container */
+        #content {
+            max-width: 28rem;       /* ~max-w-md */
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center px-4">
+<div id="content">
+
+    <!-- GIF Container -->
+    <div id="gif-container" class="flex flex-col items-center gap-2 mb-4">
+
+        <!-- Ships row -->
+        <div class="flex gap-1">
+            <img src="../assets/star-wars-quote/ship-1.gif" alt="Ship 1" class=" object-contain" />
+            <img src="../assets/star-wars-quote/ship-2.gif" alt="Ship 2" class=" object-contain" />
+        </div>
+
+    </div>
+
+    <!-- Quote Box -->
+    <div id="quote-box" class="bg-white p-6 border-l-4 border-gray-500 shadow-md text-lg leading-relaxed relative">
+        <span class="absolute -top-4 left-4 text-5xl text-gray-300 font-serif select-none">“</span>
+        <p id="quote-text" class="relative z-10 mb-4 min-h-[5rem]"></p>
+        <p id="author" class="text-sm text-right text-gray-500 italic"></p>
+    </div>
+
+    <!-- New Quote Button -->
+    <button id="generateBtn" class="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded shadow mt-4">
+        get a funny quote
+    </button>
+
+</div>
+
+<script>
+    const starWarsCharacters = [
+        "R2-D2", "C-3PO", "Wicket", "Chewbacca", "Yoda",
+        "Jabba The Hutt", "Palpatine", "Luke Skywalker", "Admiral Ackbar",
+        "Darth Vader", "Princess Leia", "Han Solo", "Obi-Wan Kenobi",
+        "Lando Calrissian", "Bossk", "Mouse Droid", "Biggs Darklighter"
+    ];
+
+    let words = [];
+
+    async function loadScriptText() {
+        try {
+            const response = await fetch('../assets/star-wars-quote/script.txt');
+            if (!response.ok) throw new Error("No script.txt found");
+            const text = await response.text();
+            words = text.split(/\s+/);
+        } catch {
+            words = ("the force is strong with this one may the force be with you use the force luke").split(" ");
+        }
+    }
+
+    function randomWriter(wordCount = 20) {
+        if (words.length === 0) return "Script not loaded.";
+
+        const output = [];
+        let index = Math.floor(Math.random() * (words.length - 1));
+        let current = words[index];
+        output.push(current);
+
+        for (let i = 0; i < wordCount - 1; i++) {
+            const nextWords = [];
+            for (let j = 0; j < words.length - 1; j++) {
+                if (words[j] === current) {
+                    nextWords.push(words[j + 1]);
+                }
+            }
+            if (nextWords.length === 0) break;
+
+            current = nextWords[Math.floor(Math.random() * nextWords.length)];
+            output.push(current);
+        }
+
+        const rawText = output.join(' ');
+        const sentenceEndings = [...rawText.matchAll(/[.?!]/g)];
+
+        if (sentenceEndings.length < 2) {
+            return capitalizeAndTerminate(rawText.trim());
+        }
+
+        const firstEnd = sentenceEndings[0].index;
+        const lastEnd = sentenceEndings[sentenceEndings.length - 1].index;
+        const trimmed = rawText.slice(firstEnd + 1, lastEnd + 1).trim();
+
+        return capitalizeAndTerminate(trimmed);
+    }
+
+    function capitalizeAndTerminate(text) {
+        if (!text) return '';
+        text = text.charAt(0).toUpperCase() + text.slice(1);
+        if (!/[.?!]$/.test(text)) {
+            text += '.';
+        }
+        return text;
+    }
+
+    function getRandomCharacter() {
+        return starWarsCharacters[Math.floor(Math.random() * starWarsCharacters.length)];
+    }
+
+    function generateChewbaccaSpeech() {
+        const chars = ['a', 'r', 'g', ' '];
+        let result = '';
+        for (let i = 0; i < 50; i++) {
+            let ch = chars[Math.floor(Math.random() * chars.length)];
+            if (Math.random() < 0.3) ch = ch.toUpperCase();
+            result += ch;
+        }
+        return result.trim().replace(/\s{2,}/g, ' ');
+    }
+
+    function generateBeepBoopSpeech() {
+        const parts = [];
+        const count = Math.floor(Math.random() * 8) + 3;
+        for (let i = 0; i < count; i++) {
+            if (Math.random() < 0.5) {
+                const eCount = Math.floor(Math.random() * 4) + 2;
+                parts.push("b" + "e".repeat(eCount) + "p");
+            } else {
+                const oCount = Math.floor(Math.random() * 4) + 2;
+                parts.push("b" + "o".repeat(oCount) + "p");
+            }
+        }
+        return parts.join(' ') + '.';
+    }
+
+    /* ----- JITTER ANIMATION ----- */
+    // We keep a reference to animation frames to cancel them on rerun
+    let animFrameId1 = null;
+    let animFrameId2 = null;
+
+    function startErraticAnimation(root, {intensity = 0, rate = 100.25} = {}) {
+        const spans = [];
+
+        // wrap every printable char in its own span
+        function wrapText(node) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const frag = document.createDocumentFragment();
+                for (const ch of node.textContent) {
+                    if (ch === '\n') frag.appendChild(document.createElement('br'));
+                    else if (ch === ' ') frag.appendChild(document.createTextNode(' '));
+                    else {
+                        const s = document.createElement('span');
+                        s.textContent = ch;
+                        s.style.display = 'inline-block';
+                        frag.appendChild(s);
+                        spans.push(s);
+                    }
+                }
+                node.replaceWith(frag);
+            } else {
+                [...node.childNodes].forEach(wrapText);
+            }
+        }
+        wrapText(root);
+
+        let lastT = performance.now();
+        function tick(t) {
+            const dt = (t - lastT) / 500;
+            lastT = t;
+            intensity += rate * dt;
+
+            const r = intensity;
+            for (const span of spans) {
+                span.style.transform =
+                    `translate3d(${(Math.random() * 2 - 1) * r}px,${(Math.random() * 2 - 1) * r}px,0)`;
+                span.style.filter = `hue-rotate(${Math.random() * 360}deg)`;
+            }
+            if (root.id === 'quote-text') animFrameId1 = requestAnimationFrame(tick);
+            else if (root.id === 'author') animFrameId2 = requestAnimationFrame(tick);
+            else requestAnimationFrame(tick);
+        }
+        tick(lastT);
+    }
+
+    async function generateQuote() {
+        if (words.length === 0) await loadScriptText();
+
+        const character = getRandomCharacter();
+        let quote = '';
+
+        if (character.toLowerCase() === "chewbacca") {
+            quote = generateChewbaccaSpeech();
+        } else if (["r2-d2", "mouse droid"].includes(character.toLowerCase())) {
+            quote = generateBeepBoopSpeech();
+        } else {
+            quote = randomWriter();
+        }
+
+        const quoteTextEl = document.getElementById('quote-text');
+        const authorEl = document.getElementById('author');
+
+        // Cancel previous animations if any
+        if (animFrameId1) cancelAnimationFrame(animFrameId1);
+        if (animFrameId2) cancelAnimationFrame(animFrameId2);
+
+        // Reset styles (stop previous jitter)
+        quoteTextEl.style.transform = '';
+        quoteTextEl.style.filter = '';
+        authorEl.style.transform = '';
+        authorEl.style.filter = '';
+
+        // Set new text
+        quoteTextEl.textContent = quote;
+        authorEl.textContent = `— ${character}`;
+
+        // Restart jitter animation on new text
+        startErraticAnimation(quoteTextEl, { intensity: 0, rate: 0.3 });
+        startErraticAnimation(authorEl, { intensity: 0, rate: 0.3 });
+    }
+
+    // Init
+    document.getElementById('generateBtn').addEventListener('click', generateQuote);
+
+    // Generate first quote on page load
+    generateQuote();
+</script>
+
+</body>
+</html>
