@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Random NBA Moment + GIF</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            align-items: center;    /* vertical center */
+            justify-content: center; /* horizontal center */
+            background: #000;
+        }
+        #wrapper {
+            position: relative;
+            width: 800px;
+            height: 450px;
+            max-width: 90vw;
+            max-height: 90vh;
+            background: #000;
+        }
+        #player {
+            width: 100%;
+            height: 100%;
+        }
+        #overlayGif {
+            position: absolute;
+            pointer-events: none;    /* so clicks go through */
+            max-width: 100px;        /* limit GIF size */
+            max-height: 100px;
+            left: 400px;             /* fixed for testing */
+            top: 400px;
+        }
+    </style>
+</head>
+<body>
+<div id="wrapper">
+    <div id="player"></div>
+</div>
+
+<script>
+    const cuePoints = [
+        0, 16, 37, 62, 76,104,126,145,173,195,223,246,
+        271,289,304,327,350,380,401,436,457,473,531,547,
+        562,594,614,637,655,687,733,774,809
+    ];
+    const startTime = cuePoints[Math.floor(Math.random() * cuePoints.length)];
+
+    const GIF_COUNT = 2;
+    const gifNumber = Math.floor(Math.random() * GIF_COUNT) + 1;
+    const gifSrc = `../assets/basketball/2.gif`;
+
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(tag);
+
+    let player;
+    function onYouTubeIframeAPIReady() {
+        player = new YT.Player('player', {
+            videoId: 'tSkXSGxYU6Q',
+            playerVars: {
+                autoplay: 1,
+                controls: 1,
+                start: startTime
+            },
+            events: {
+                onReady: e => {
+                    e.target.mute();
+                    e.target.playVideo();
+                    addRandomGif();
+                }
+            }
+        });
+    }
+
+    function addRandomGif() {
+        const wrapper = document.getElementById('wrapper');
+        const container = document.getElementById('player');
+        const gif = document.createElement('img');
+        gif.id = 'overlayGif';
+        gif.src = gifSrc;
+
+        const maxX = container.clientWidth - gif.width;
+        const maxY = container.clientHeight - gif.height;
+
+        // Clamp to 0 minimum, just in case
+        const posX = Math.max(0, Math.floor(Math.random() * maxX));
+        const posY = Math.max(0, Math.floor(Math.random() * maxY));
+
+        gif.style.left = posX + 'px';
+        gif.style.top = posY + 'px';
+
+        gif.style.transform = 'scale(3)';
+
+        container.appendChild(gif);
+
+        wrapper.appendChild(gif);
+    }
+</script>
+</body>
+</html>

@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>DJ's Corner</title>
-    <link rel="icon" href="favicon.png" type="image/png">
+    <title>Welcome to My Awesome Site!!!</title>
 
-    <!-- Pixel font -->
+    <!-- Pixel font for good measure -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -15,17 +14,20 @@
         html,body{
             height:100%;
             margin:0;
-            background:url("assets/welcome/bg.png") repeat;
-            color:#00FF00;           /* toxic green */
+            background:url("../assets/welcome/bg.png") repeat;
+            color:#00FF00; /* toxic green text */
             font-family:"Press Start 2P",monospace;
         }
 
-        /* Outer border frames */
+        /* Center the main box but keep scrollbars like the old days */
         #wrapper{
             margin:20px auto;
             width:90%;
             max-width:800px;
+            position:relative;
         }
+
+        /* Multiple “frames” of borders */
         .frame{
             padding:10px;
             border:4px ridge #FF0;
@@ -41,14 +43,20 @@
             font-size:48px;
             text-align:center;
             margin:20px 0;
-            color:#FF0000;
+            color:#ff0000;
             text-shadow:2px 2px #000;
         }
 
-        /* Blink text */
-        @keyframes blink{0%,49%{opacity:1;}50%,100%{opacity:0;}}
-        .blink{animation:blink 1s step-end infinite;}
+        /* Blink text old‑school (modern browsers ignore <blink>) */
+        @keyframes blink {
+            0%,49% {opacity:1;}
+            50%,100%{opacity:0;}
+        }
+        .blink{
+            animation:blink 1s step-end infinite;
+        }
 
+        /* Rainbow horizontal rule */
         .rainbow{
             height:6px;
             background:linear-gradient(90deg,red,orange,yellow,green,cyan,blue,violet);
@@ -56,33 +64,15 @@
             margin:20px 0;
         }
 
+        /* Huge “Under Construction” gif */
         .uc{
             display:block;
             margin:20px auto;
             max-width:100%;
         }
 
-        .center{text-align:center;}
-
-        /* Ugly neon buttons */
-        .btnbar{
-            margin-top:30px;
+        .center{
             text-align:center;
-        }
-        .gbtn{
-            display:inline-block;
-            margin:8px;
-            padding:14px 20px;
-            border:4px outset #FF0;
-            background:#8000FF;
-            color:#FFFF00;
-            text-decoration:none;
-            font-size:14px;
-        }
-        .gbtn:hover{
-            background:#FF0080;
-            border-style:inset;
-            color:#00FFFF;
         }
     </style>
 </head>
@@ -92,6 +82,7 @@
     <div class="frame">
         <div class="frame">
 
+            <!-- Marquee banner -->
             <marquee behavior="scroll" direction="left" scrollamount="10">
                 *** THIS IS GONNA BE ONE MAD L ***
             </marquee>
@@ -100,22 +91,16 @@
 
             <hr class="rainbow">
 
-            <p>Welcome to the highly‑coveted internet archive of <span style="color:#FFFF00;">crazy cool</span> DJ shenanigans.
-                Click on a link below to make the magic happen.</p>
+            <p>Welcome to the highly-coveted internet archive of <span style="color:#FFFF00;">crazy cool</span> DJ shenanigans. Click on a link below to make the magic happen.</p>
 
-            <img src="assets/welcome/wizard.gif" alt="Wizard" class="uc">
+            <img src="../assets/welcome/wizard.gif" alt="Under Construction" class="uc">
 
             <p style="color:#FFFF00;" class="center">Please upload your wizard to continue</p>
 
-            <marquee behavior="alternate" scrollamount="5" style="color:#0FF;">your&nbsp;destiny&nbsp;awaits</marquee>
+            <marquee behavior="alternate" scrollamount="5" style="color:#0FF;">
+                <br>your destiny awaits
+            </marquee>
 
-            <!-- BUTTON BAR -->
-            <div class="btnbar">
-                <a class="gbtn" href="pages/bomb-game.html">💣 Goomba Thing</a>
-                <a class="gbtn" href="pages/star-wars-quote.html">🛰 Funny Star Wars</a>
-                <a class="gbtn" href="pages/relic-creator.html">🗝 Relic Creator</a>
-                <a class="gbtn" href="pages/basketball.html">🏀 Epic Basketball</a>
-            </div>
         </div>
     </div>
 </div>

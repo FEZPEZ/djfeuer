@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Super Relic Maker</title>
+    <!-- Tailwind CDN (development) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body class="h-screen m-0 flex font-sans">
+
+<!-- LEFT PANEL -->
+<div id="left"
+     class="basis-2/5 min-w-[260px] p-6 flex flex-col gap-5 bg-gray-100">
+
+    <label class="font-semibold">Enter the relic name:</label>
+    <input id="name"
+           class="border border-gray-400 rounded px-2 py-1"
+           type="text">
+
+    <label class="font-semibold">Enter the relic effect:</label>
+    <textarea id="effect"
+              class="border border-gray-400 rounded px-2 py-1 h-40 resize-none"></textarea>
+
+    <!-- Green up‑arrow icon (≈200 px) -->
+    <i data-lucide="arrow-big-up"
+       class="self-center fill-green-600 stroke-green-600 w-[200px] h-[200px]"></i>
+
+    <button id="create"
+            class="mt-auto bg-green-600 text-white rounded py-2 hover:bg-green-700">
+        Create Relic
+    </button>
+</div>
+
+<!-- RIGHT PANEL -->
+<div id="right"
+     class="flex-1 flex flex-col items-center overflow-auto
+              bg-[url('../assets/relic-creator/bg.jpg')] bg-cover bg-center">
+
+    <!-- Title -->
+    <h1 class="mt-6 mb-4 text-3xl font-extrabold uppercase text-white drop-shadow">
+        Relic Creator
+    </h1>
+
+    <!-- Card goes here -->
+    <div id="card-slot" class="flex-grow flex items-start justify-center w-full"></div>
+</div>
+
+<script>
+    /* Unsplash key – replace with your own */
+    const UNSPLASH_ACCESS_KEY = '5nUPZXqG6E72d0kNflhUru-ehraxEMQ5FC8xEKpnCNM';
+
+    async function fetchRandomUnsplash(query) {
+        const url = `https://api.unsplash.com/photos/random?` +
+            `query=${encodeURIComponent(query)}` +
+            `&orientation=landscape&client_id=${UNSPLASH_ACCESS_KEY}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Unsplash API error');
+        const data = await res.json();
+        return data.urls.regular;
+    }
+
+    document.getElementById('create').addEventListener('click', async () => {
+        const name   = document.getElementById('name').value.trim();
+        const effect = document.getElementById('effect').value.trim();
+        if (!name || !effect) return;
+
+        /* ----------  CONFIG  ---------- */
+        const CARD_W      = 400;   // PNG width
+        const CARD_H      = 600;   // PNG height
+        const CONTENT_PAD = 20;    // inner margin (px)
+
+        /* ----------  CARD  ---------- */
+        const card = document.createElement('div');
+        card.className =
+            `relative shrink-0 bg-[url('../assets/relic-creator/playing-card.png')]
+         bg-contain bg-no-repeat bg-center
+         w-[${CARD_W}px] h-[${CARD_H}px]`;
+
+        const pad = `style="padding:${CONTENT_PAD}px"`;
+
+        card.innerHTML = `
+        <!-- NAME -->
+        <div class="absolute left-[10%] right-[10%] top-[12%]
+                    text-xl font-bold text-center break-words" ${pad}>
+          ${name}
+        </div>
+
+        <!-- IMAGE -->
+        <img class="card-img absolute left-1/2 transform -translate-x-1/2
+                     top-[22%] h-[34%] object-cover rounded" ${pad}
+             alt="">
+
+        <!-- EFFECT -->
+        <div class="card-effect absolute left-[10%] right-[10%]
+                    top-[55%] bottom-[10%] text-center overflow-auto text-l"
+             ${pad}>
+          ${effect}
+        </div>
+      `;
+
+        /* Inject card (leave title intact) */
+        const slot = document.getElementById('card-slot');
+        slot.innerHTML = '';
+        slot.appendChild(card);
+
+        /* Fetch Unsplash image */
+        try {
+            card.querySelector('.card-img').src = await fetchRandomUnsplash(name);
+        } catch {
+            card.querySelector('.card-img').src =
+                'https://via.placeholder.com/300x169?text=No+Image';
+        }
+    });
+</script>
+<script>
+    /* Activate Lucide icons */
+    lucide.createIcons();
+</script>
+</body>
+</html>
